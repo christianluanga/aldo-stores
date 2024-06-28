@@ -1,0 +1,50 @@
+type Shoe {
+  id: ID!
+  model: String!
+  updatedAt: String
+  guid: String!
+  inventory: Int
+  store: Store
+}
+
+type Store {
+  id: ID!
+  guid: String!
+  name: String!
+}
+
+input ShoeInput {
+  model: String!
+  inventory: Int!
+}
+
+input ShoeSaleInput {
+  storeId: Int!
+  shoeId: Int!
+  quantity: Int!
+}
+
+type RequestShoeInventory {
+  fromShoe: Shoe,
+  toShoe: Shoe
+}
+
+input RequestShoeInventoryInput {
+  fromStoreId: Int!
+  toStoreId: Int!
+  requestedAmount: Int!
+  shoeId: Int!
+}
+
+type Query {
+  shoes(storeId: Int): [Shoe]!
+  shoe(id: ID!): Shoe
+  allShoesInStock: [Shoe]!
+}
+
+type Mutation {
+  addShoe(shoeInput: ShoeInput!): Shoe!
+  requestShoeInventory(details: RequestShoeInventoryInput): RequestShoeInventory!
+  deleteShoe(id: ID!): Shoe!
+  saleShoe(details: ShoeSaleInput): Shoe!
+}

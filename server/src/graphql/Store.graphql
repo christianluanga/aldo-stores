@@ -1,0 +1,10 @@
+type Store {
+  id: ID!
+  guid: String!
+  name: String!
+}
+
+type Query {
+  stores: [Store]!
+}
+

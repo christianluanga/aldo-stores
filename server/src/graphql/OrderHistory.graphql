@@ -1,0 +1,24 @@
+type Shoe {
+  id: ID!
+  model: String!
+  guid: String!
+  inventory: Int
+  store: Store
+}
+
+type Store {
+  id: ID!
+  guid: String!
+  name: String!
+}
+
+type OrderHistory {
+    shoe: Shoe!
+    quantitySold: Int!
+    dateSold: String!
+}
+
+type Query {
+    orders: [OrderHistory]!
+}
+
