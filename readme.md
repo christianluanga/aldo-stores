@@ -7,17 +7,12 @@
 For your convenience, Docker files are included to set up containers for the database, server, and client. 
 Use the following command to build and start all services:
 ```bash
-    docker-compose up --build
+    docker-compose build
+    docker-compose up
 ```
 
-Alternatively, navigate to the server directory and run:
-```bash
-    cd server/
-    npm run docker:up
-```
 
 To do the setup in different stages see the instructions below.
-
 
 # Server 
 
