@@ -4,12 +4,14 @@ export default gql`
     query AllShoesInStock {
   shoes:allShoesInStock {
     id
+    guid
     inventory
     model
     updatedAt
     store {
-      name
       id
+      guid
+      name
     }
   }
 }

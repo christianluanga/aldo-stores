@@ -7,7 +7,7 @@ const Banner: React.FC<{ lowCountItems: ShoeDTO[], handleClick: () => void }> = 
       <div className="relative flex flex-col items-center justify-center text-center text-white">
         <p className="text-4xl text-red-300 blink-text">ALERT!</p>
         <p className="text-xl font-bold my-4 animate-move ">
-          {lowCountItems.length} {lowCountItems.length === 1 ? ' shoe is' : ' shoes are '} 
+          {lowCountItems.length} {lowCountItems.length === 1 ? ' shoe is ' : ' shoes are '} 
           running low on inventory.
         </p>
         <button

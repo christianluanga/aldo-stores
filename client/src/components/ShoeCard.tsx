@@ -60,7 +60,7 @@ const StoreCard = ({ shoe, handleSubmit }: {shoe: ShoeDTO, handleSubmit: any}) =
             handleSubmit({shoeId: shoe.id, quantity: shoeCount});
             setShoeCount(0)
           }}
-          disabled={shoeCount === 0}
+          disabled={shoeCount === 0 || inventory === 0}
         >
           Buy
         </button>

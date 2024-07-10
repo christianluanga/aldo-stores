@@ -9,6 +9,7 @@ export default gql`
         inventory
         store {
             id
+            guid
             name
         }
     }

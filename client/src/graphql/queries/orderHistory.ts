@@ -6,9 +6,11 @@ export default gql`
   orders {
     shoe {
       id
+      guid
       model
       store {
         id
+        guid
         name
       }
     }

@@ -45,7 +45,7 @@ const PieChart: React.FC<{orders: OrderDTO[]}> = ({ orders }) => {
             onChange={(e)=>setSelectedStore(e.target.value)}
             className="mr-2 p-2 border border-gray-300 rounded"
           >
-            {storesWithSales.map((storeName) => (
+            {storesWithSales.reverse().map((storeName) => (
               <option key={storeName} value={storeName}>{storeName}</option>
             ))}
           </select>

@@ -1,4 +1,5 @@
 import { toast, toastOptions } from './components/TosatifyConfig'
+import { ShoeDTO } from './types'
 
 interface AlertProps {
   type: 'success'| 'error' | 'warning', 
@@ -22,16 +23,7 @@ export const toastAlert = ({type, message, options = {}}: AlertProps)=>{
 
 }
 
-export const shoeMatched = ({
-  shoeId,
-  updatedShoeId,
-  shoeStoreId,
-  updatedShoeStoreId,
-}: {
-  shoeId: number;
-  updatedShoeId: number;
-  shoeStoreId: number;
-  updatedShoeStoreId: number;
-}): boolean => {
-  return Number(shoeId) === Number(updatedShoeId) && Number(shoeStoreId) === Number(updatedShoeStoreId);
+export const isUpdatedShoe = (previousShoe: ShoeDTO, updatedShoe: ShoeDTO): boolean => {
+  return Number(previousShoe.id) === updatedShoe.id && 
+         Number(previousShoe.store?.id) === updatedShoe.store?.id;
 };

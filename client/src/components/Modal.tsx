@@ -43,7 +43,7 @@ const RequestModal: React.FC<RequestModalProps> = ({
       className="modal-content"
       overlayClassName="modal-overlay"
     >
-      <h2 className="text-xl font-bold mb-4">Request {selectedShoe?.model} Items</h2>
+      <h2 className="text-xl font-medium mb-4">{selectedShoe?.store?.name} Store requests {amount} item(s) of {selectedShoe?.model}</h2>
       <p className="mb-2">Enter the amount to request:</p>
       <input
         type="number"
