@@ -1,4 +1,5 @@
 import { toast, toastOptions } from './components/TosatifyConfig'
+import { LOW_STOCK } from './components/constants/constants'
 import { ShoeDTO } from './types'
 
 interface AlertProps {
@@ -23,7 +24,20 @@ export const toastAlert = ({type, message, options = {}}: AlertProps)=>{
 
 }
 
-export const isUpdatedShoe = (previousShoe: ShoeDTO, updatedShoe: ShoeDTO): boolean => {
-  return Number(previousShoe.id) === updatedShoe.id && 
-         Number(previousShoe.store?.id) === updatedShoe.store?.id;
+export const getRowClasses = (
+  shoe: ShoeDTO,
+  index: number,
+  updatedShoe: ShoeDTO,
+  isLowInStock: boolean
+) => {
+  const baseClass = index % 2 === 0 ? "bg-blue-50" : "bg-white";
+  const updatedClass = shoe.id === updatedShoe?.id ? "bg-green-100" : "";
+  const lowInventoryClass =
+    !isLowInStock && shoe.inventory! < LOW_STOCK ? "bg-red-300 blink" : "";
+  const hoverClass =
+    !isLowInStock && shoe.inventory! < LOW_STOCK
+      ? "hover:text-white"
+      : "hover:bg-blue-100";
+
+  return `${baseClass} ${updatedClass} ${lowInventoryClass} ${hoverClass} transition duration-300 ease-in-out`;
 };

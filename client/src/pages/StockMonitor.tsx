@@ -1,20 +1,97 @@
 import React, { useState, useEffect } from "react";
 import { orderBy } from "lodash";
 import { DateTime } from "luxon";
-import useShoes from "../hooks/useShoes";
 import { toast, ToastContainer } from "../components/TosatifyConfig";
 import RequestModal from "../components/Modal";
 import Banner from "../components/LowStockBanner";
-import { UPDATE_STORES_INVENTORY } from "../graphql";
-import { useMutation } from "@apollo/client";
-import { toastAlert } from "../utils";
+import { GET_ALL_SHOES_IN_STOCK, UPDATE_STORES_INVENTORY } from "../graphql";
+import { useMutation, useQuery } from "@apollo/client";
+import { getRowClasses, toastAlert } from "../utils";
 import { LOW_STOCK } from "../components/constants/constants";
 import { ShoeDTO, inventoryRequestProps } from "../types";
+import Pagination from "../components/Pagination";
+import { isUpdatedShoe } from "../hooks/helpers";
+import { socket } from "../socketioConfig";
 
 const ITEMS_PER_PAGE = 10;
 
 const StockMonitor: React.FC = () => {
-  const { loading, error, shoes, updatedShoe } = useShoes();
+
+  const { loading, error, data } = useQuery<{ shoes: ShoeDTO[] }>(GET_ALL_SHOES_IN_STOCK,{
+    fetchPolicy: "no-cache",
+  });
+
+  const [shoes, setShoes] = useState<ShoeDTO[]>([]);
+  const [updatedShoe, setUpdatedShoe] = useState<ShoeDTO | null>(null);
+
+  useEffect(() => {
+    if (data) {
+      setShoes(data.shoes);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    let timeId: NodeJS.Timeout;
+
+    const handleSaleCompleted = (updatedShoe: ShoeDTO) => {
+      setShoes((prevShoes) =>
+        prevShoes.map((prevShoe) =>
+          isUpdatedShoe(prevShoe, updatedShoe)
+            ? {
+                ...updatedShoe,
+                updatedAt: `${new Date(updatedShoe.updatedAt!).getTime()}`,
+              }
+            : prevShoe
+        )
+      );
+
+      setUpdatedShoe(updatedShoe);
+      //Used to highlight to updated shoe row o the inventory table for t time
+      timeId = setTimeout(() => setUpdatedShoe(null), 3000);
+    };
+
+    //Listen for a server emitted event with the update shoe object
+    socket.on("saleCompleted", handleSaleCompleted);
+
+    return () => {
+      socket.off("saleCompleted", handleSaleCompleted);
+      clearTimeout(timeId);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleInventoryRequest = ({
+      fromShoe,
+      toShoe,
+    }: {
+      fromShoe: ShoeDTO;
+      toShoe: ShoeDTO;
+    }) => {
+      setShoes((prevShoes) =>
+        prevShoes.map((prevShoe) => {
+          if (isUpdatedShoe(prevShoe, fromShoe)) {
+            return {
+              ...fromShoe,
+              updatedAt: `${new Date(fromShoe.updatedAt!).getTime()}`,
+            };
+          }
+          if (isUpdatedShoe(prevShoe, toShoe)) {
+            return {
+              ...toShoe,
+              updatedAt: `${new Date(toShoe.updatedAt!).getTime()}`,
+            };
+          }
+          return prevShoe;
+        })
+      );
+    };
+
+    socket.on("inventoriesUpdated", handleInventoryRequest);
+
+    return () => {
+      socket.off("inventoriesUpdated", handleInventoryRequest);
+    };
+  }, []);
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedShoe, setSelectedShoe] = useState<ShoeDTO | null>(null);
@@ -24,6 +101,21 @@ const StockMonitor: React.FC = () => {
   const [isLowInStock, setIsLowInStock] = useState(false);
 
   const [updateStoreInventories] = useMutation(UPDATE_STORES_INVENTORY);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterModel, filterStore]);
+
+  useEffect(()=>{
+    if (updatedShoe) {
+      toast.dismiss()
+      toastAlert({
+        type: "success",
+        message: "Shoe inventory updated!",
+        options: {},
+      });
+    }
+  }, [updatedShoe])
 
   const handleInventoryRequest = async (details: inventoryRequestProps) => {
     try {
@@ -41,19 +133,6 @@ const StockMonitor: React.FC = () => {
 
     setModalIsOpen(false);
   };
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filterModel, filterStore]);
-
-  if (updatedShoe) {
-    toast.dismiss();
-    toastAlert({
-      type: "success",
-      message: "Shoe inventory updated!",
-      options: {},
-    });
-  }
 
   const lowInStock = shoes.filter((shoe) => shoe.inventory! < LOW_STOCK);
 
@@ -76,12 +155,6 @@ const StockMonitor: React.FC = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handlePagination = (direction: "back" | "forward") => {
-    direction === "back"
-      ? setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))
-      : setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
-  };
-
   const handleRequestAction = (shoe: ShoeDTO) => {
     setSelectedShoe(shoe);
     setModalIsOpen(true);
@@ -98,23 +171,6 @@ const StockMonitor: React.FC = () => {
 
   const shoeModels = Array.from(new Set(shoes.map((shoe) => shoe.model)));
   const stores = Array.from(new Set(shoes.map((shoe) => shoe.store?.name)));
-
-  const getRowClasses = (
-    shoe: ShoeDTO,
-    index: number,
-    updatedShoe: ShoeDTO
-  ) => {
-    const baseClass = index % 2 === 0 ? "bg-blue-50" : "bg-white";
-    const updatedClass = shoe.id === updatedShoe?.id ? "bg-green-100" : "";
-    const lowInventoryClass =
-      !isLowInStock && shoe.inventory! < LOW_STOCK ? "bg-red-300 blink" : "";
-    const hoverClass =
-      !isLowInStock && shoe.inventory! < LOW_STOCK
-        ? "hover:text-white"
-        : "hover:bg-blue-100";
-
-    return `${baseClass} ${updatedClass} ${lowInventoryClass} ${hoverClass} transition duration-300 ease-in-out`;
-  };
 
   return (
     <div className="container mx-auto my-8 px-4">
@@ -182,7 +238,12 @@ const StockMonitor: React.FC = () => {
             {paginatedShoes.map((shoe, index) => (
               <tr
                 key={`${shoe.id}-${shoe.store?.id}`}
-                className={getRowClasses(shoe, index, updatedShoe as ShoeDTO)}
+                className={getRowClasses(
+                  shoe,
+                  index,
+                  updatedShoe as ShoeDTO,
+                  isLowInStock
+                )}
               >
                 <td className="px-4 py-3 border-b text-center">
                   {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
@@ -215,29 +276,11 @@ const StockMonitor: React.FC = () => {
           </tbody>
         </table>
       </div>
-      <div className="mt-4 flex justify-center items-center space-x-4">
-        <button
-          className={`px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-700 ${
-            currentPage === 1 && "opacity-50"
-          }`}
-          onClick={() => handlePagination("back")}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </button>
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          className={`px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-700 ${
-            currentPage === totalPages && "opacity-50"
-          }`}
-          onClick={() => handlePagination("forward")}
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </button>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };
