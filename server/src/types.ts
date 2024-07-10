@@ -42,7 +42,7 @@ export interface Context {
     models: typeof models;
     io: SocketIOServer;
     db: typeof sequelize
-  }
+}
 
 export interface IShoeService {
     shoes(storeId?: number) : Promise<ShoeDTO[]>

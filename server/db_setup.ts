@@ -1,13 +1,13 @@
 import { ShoeDTO, StoreDTO} from './src/types'
 import { STORE_STORES, SHOES_MODELS } from './mock_data/index';
 import sequelize from './src/config/database'
-import {Shoe, Store, StoreInventory, OrderHistory} from './src/models/'
+import { Shoe, Store, StoreInventory, OrderHistory } from './src/models/'
 
 const models = [
-    Store,
-    Shoe,
-    StoreInventory,
-    OrderHistory
+  Shoe,
+  Store,
+  StoreInventory,
+  OrderHistory
 ];
 
 const generateRandomInventory = ()=> {
@@ -42,7 +42,7 @@ const populateTables = async()=>{
         await StoreInventory.create({
           StoreId: store.id,
           ShoeId: shoe.id,
-          inventory: inventory
+          inventory
         });
         console.log(`Inserted ${inventory} inventory for shoe model ${shoe.model} in store ${store.name}`);
       }
@@ -54,7 +54,7 @@ const populateTables = async()=>{
     await sequelize.close(); // Close Sequelize connection after operation
   }
 
-    console.log('Database seeded')
+  console.log('Database seeded')
 }
 
 const createTables = async()=> {

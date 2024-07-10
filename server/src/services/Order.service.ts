@@ -37,7 +37,7 @@ export class OrderHistoryService implements IOrderHistory {
     }
 
     async createOrder(details: ShoeSaleDTO): Promise<void> {
-        await this.context.models.OrderHistory.create({ ...details })
+        const order = await this.context.models.OrderHistory.create({ ...details })
     }
 
 }
